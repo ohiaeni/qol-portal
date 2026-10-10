@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qol-portal",
+  // Astro の Cloudflare アダプターが用意する Worker の入口
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // <name>.<subdomain>.workers.dev で公開する（Cloudflare Access で使う人だけに制限する前提）
+  "workers_dev": true,
+  // バージョンごとのプレビュー URL は Access の保護から漏れやすいので無効にしておく
+  "preview_urls": false,
+  "vars": {
+    // ポータルから開く各アプリの URL（秘密情報ではない）。空のままだと画面に「URL が未設定」と出る。
+    // ローカル開発では .dev.vars で上書きできる
+    "KAITOKUNE_URL": "https://kaitokune.ohiaeni.workers.dev",
+    "KAKEIBOU_URL": "https://kakeibou-oftg.onrender.com"
+  }
+}

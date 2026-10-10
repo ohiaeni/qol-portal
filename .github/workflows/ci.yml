@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Action はタグの付け替えによる改ざんを防ぐためコミット SHA で固定する。
+      # 末尾のバージョンコメントは Dependabot が SHA と一緒に更新する
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 後続のステップに GitHub のトークンを残さない
+          persist-credentials: false
+
+      # npm 11 以降（Node.js 24 に付属）でないと package.json の allowScripts が効かない。
+      # バージョンは .node-version で手元と揃える
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint / Format
+        run: npm run check
+
+      - name: Spell check
+        run: npm run spell
+
+      # 未使用のファイル・export・依存関係を検出する
+      - name: Knip
+        run: npm run knip
+
+      # astro check（型チェック）+ astro build
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test:coverage
+
+      # カバレッジの合計をジョブのサマリーに出す（閾値はまだ設けず、現状の把握に使う）
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "## カバレッジ"
+            echo
+            echo "| 指標 | 割合 | 件数 |"
+            echo "| --- | ---: | ---: |"
+            jq -r '.total | to_entries[] | select(.key != "branchesTrue") | "| \(.key) | \(.value.pct)% | \(.value.covered) / \(.value.total) |"' coverage/coverage-summary.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+      # 生成ファイルを手元で更新し忘れていないかを確認する
+      - name: Check generated files
+        run: |
+          npm run cf-typegen
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            echo "::error::生成ファイルが最新ではありません。手元で npm run cf-typegen（wrangler.jsonc）を実行し、生成されたファイルをコミットしてください"
+            exit 1
+          fi
+
+  # ワークフローの構文・式・シェルスクリプト（shellcheck）を確認する
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # 公式のダウンロードスクリプトをコミット SHA で固定して取得する
+      - name: Install actionlint
+        run: bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12
+
+      - name: Run actionlint
+        run: ./actionlint -color
+
+  # ワークフローのセキュリティ上の問題（権限の付けすぎ、スクリプトインジェクションなど）を確認する
+  zizmor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: 1.30.1
+          # 結果は Security タブ（code scanning）ではなくログに出し、指摘があればジョブを失敗させる
+          advanced-security: false

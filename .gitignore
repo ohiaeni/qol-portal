@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.wrangler
+.dev.vars
+*.local
+.DS_Store
+# git worktree の作成場所（CLAUDE.md の「git worktree」を参照）
+.claude/worktree/
+# Astro が生成する型
+.astro

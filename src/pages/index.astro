@@ -1,0 +1,163 @@
+---
+import { env } from "cloudflare:workers";
+import { listApps } from "../lib/apps";
+
+const apps = listApps(env);
+const { email } = Astro.locals;
+---
+
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"
+    >
+    <title>生活の質向上ポータル</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>生活の質向上ポータル</h1>
+        <p class="email">{email}</p>
+      </header>
+      <ul>
+        {
+          apps.map((app) => (
+            <li>
+              {app.url ? (
+                <a class="card" href={app.url}>
+                  <span class="icon" aria-hidden="true">{app.icon}</span>
+                  <span class="text">
+                    <span class="name">{app.name}</span>
+                    <span class="description">{app.description}</span>
+                  </span>
+                </a>
+              ) : (
+                <div class="card disabled">
+                  <span class="icon" aria-hidden="true">{app.icon}</span>
+                  <span class="text">
+                    <span class="name">{app.name}</span>
+                    <span class="description">{app.description}</span>
+                    <span class="warning">URL が未設定です（wrangler.jsonc の vars）</span>
+                  </span>
+                </div>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light dark;
+    --background: #fafaf9;
+    --foreground: #1c1917;
+    --muted: #78716c;
+    --card: #fff;
+    --border: #e7e5e4;
+    --accent: #d97706;
+    --warning: #dc2626;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0c0a09;
+      --foreground: #f5f5f4;
+      --muted: #a8a29e;
+      --card: #1c1917;
+      --border: #292524;
+      --accent: #f59e0b;
+      --warning: #f87171;
+    }
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+</style>
+
+<style>
+  main {
+    max-width: 36rem;
+    margin: 0 auto;
+    padding: 2.5rem 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .email {
+    margin: 0.25rem 0 2rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--card);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  a.card:hover,
+  a.card:focus-visible {
+    border-color: var(--accent);
+    outline: none;
+  }
+
+  .disabled {
+    opacity: 0.6;
+  }
+
+  .icon {
+    font-size: 2rem;
+  }
+
+  .text {
+    display: grid;
+    gap: 0.125rem;
+  }
+
+  .name {
+    font-weight: 600;
+    font-size: 1.125rem;
+  }
+
+  .description {
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .warning {
+    color: var(--warning);
+    font-size: 0.75rem;
+  }
+</style>

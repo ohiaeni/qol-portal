@@ -1,0 +1,77 @@
+name: Release
+
+# バージョンのタグを push したら、ノートを自動生成して GitHub Release を作る。
+# ノートの分類は .github/release.yml（PR のラベルごと）。タグの作成は /release スキルで行う
+#
+# - 本番版 v<MAJOR>.<MINOR>.<PATCH>（例: v0.2.0）: Release を公開し、同じバージョンのベータ版の下書きを消す（デプロイは deploy.yml）
+# - ベータ版 v<MAJOR>.<MINOR>.<PATCH>-beta.<N>（例: v0.2.0-beta.1）: 下書き（draft の pre-release）を作る
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Release の作成に必要
+      contents: write
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          stable='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+          beta='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$'
+          # トリガーの v*.*.* はワイルドカードなので、正しい形かをここで確かめる
+          if [[ "$TAG" =~ $stable ]]; then
+            kind=production
+          elif [[ "$TAG" =~ $beta ]]; then
+            kind=beta
+          else
+            echo "::error::タグ $TAG は v<MAJOR>.<MINOR>.<PATCH> または v<MAJOR>.<MINOR>.<PATCH>-beta.<N> の形式ではないため、Release を作りません"
+            exit 1
+          fi
+
+          # ノートは直前の本番版からの変更をまとめる（ベータ版も、次の本番版に入る予定の変更を一覧にする）
+          base="${TAG%%-*}"
+          prev=$(
+            { gh api "repos/$GITHUB_REPOSITORY/tags" --paginate --jq '.[].name' | grep -E "$stable" || true; echo "$base"; } \
+              | sort -uV | grep -x -B1 "$base" | grep -vx "$base" || true
+          )
+
+          args=(--repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes --verify-tag)
+          if [ -n "$prev" ]; then
+            args+=(--notes-start-tag "$prev")
+          fi
+          if [ "$kind" = beta ]; then
+            args+=(--draft --prerelease)
+          fi
+
+          echo "種類: $kind / 直前の本番版: ${prev:-なし}"
+          gh release create "$TAG" "${args[@]}"
+
+      # 本番版を公開したら、同じバージョンのベータ版の下書きは役目を終えるので消す。
+      # 消すのは Release（下書き）だけで、タグは残す（v* のタグはルールセットで保護されている）
+      - name: Delete beta drafts
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          drafts=$(
+            gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
+              --jq '.[] | select(.draft) | .tag_name' \
+              | grep -E "^${TAG//./\\.}-beta\.(0|[1-9][0-9]*)$" || true
+          )
+          if [ -z "$drafts" ]; then
+            echo "消すベータ版の下書きはありません"
+            exit 0
+          fi
+          for draft in $drafts; do
+            echo "下書きを削除: $draft"
+            gh release delete "$draft" --repo "$GITHUB_REPOSITORY" --yes
+          done

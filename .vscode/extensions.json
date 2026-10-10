@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "esbenp.prettier-vscode",
+    "astro-build.astro-vscode",
+    "vitest.explorer",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

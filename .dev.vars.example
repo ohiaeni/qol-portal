@@ -1,0 +1,6 @@
+# cp .dev.vars.example .dev.vars して値を入れる（.dev.vars は git 管理外）
+# ローカル開発で使うユーザーのメールアドレス。本番では Access の JWT から決めるので設定しない（docs/setup.md）
+DEV_USER_EMAIL=owner@example.invalid
+# 任意: ローカル開発で画面に出す各アプリの URL（wrangler.jsonc の値を上書きする）
+# KAITOKUNE_URL=http://localhost:5173
+# KAKEIBOU_URL=http://localhost:5174
