@@ -86,10 +86,27 @@ gh secret set CLOUDFLARE_API_TOKEN --env production
 gh secret set CLOUDFLARE_ACCOUNT_ID --env production
 ```
 
+## 6. 要望フォームの GitHub トークンを登録する
+
+`/request` の要望フォームは、送られた内容を kaitokune・かけいぼのリポジトリの issue にします。そのために、issue を作るだけの権限を持つトークンを Worker のシークレットに登録します。登録するまでは、フォームを送ると「送信できませんでした」と出ます。
+
+1. GitHub の [Fine-grained personal access tokens](https://github.com/settings/personal-access-tokens/new) で新しいトークンを作る
+2. **Repository access** は「Only select repositories」で、`wrangler.jsonc` の `KAITOKUNE_REPO`・`KAKEIBOU_REPO` に書いたリポジトリだけを選ぶ
+3. **Permissions** は Repository permissions の **Issues** を「Read and write」にする（ほかは付けない）
+4. 有効期限は最長（1 年）にし、切れる前に作り直す
+5. Worker のシークレットに登録する
+
+```sh
+npx wrangler secret put GITHUB_TOKEN
+```
+
+ローカル開発で試すときは `.dev.vars` に `GITHUB_TOKEN` を書きます。書かなければ送信は失敗するだけで、ほかの画面は動きます。
+
 ## 困ったとき
 
-| 症状                                     | 原因と対処                                                                                                                                    |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 「ログインを確認できませんでした」と出る | 本番では `ACCESS_TEAM_DOMAIN` と `ACCESS_AUD` が未登録か間違っています（手順 4-3）。ローカルでは `.dev.vars` に `DEV_USER_EMAIL` がありません |
-| アプリに「URL が未設定です」と出る       | `wrangler.jsonc` の `vars` が空です（手順 2）                                                                                                 |
-| 本番のログを見たい                       | `npx wrangler tail`                                                                                                                           |
+| 症状                                       | 原因と対処                                                                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 「ログインを確認できませんでした」と出る   | 本番では `ACCESS_TEAM_DOMAIN` と `ACCESS_AUD` が未登録か間違っています（手順 4-3）。ローカルでは `.dev.vars` に `DEV_USER_EMAIL` がありません |
+| アプリに「URL が未設定です」と出る         | `wrangler.jsonc` の `vars` が空です（手順 2）                                                                                                 |
+| 要望を送ると「送信できませんでした」と出る | `GITHUB_TOKEN` が未登録・期限切れ、またはトークンの対象リポジトリに含まれていません（手順 6）。`npx wrangler tail` で原因を見られます         |
+| 本番のログを見たい                         | `npx wrangler tail`                                                                                                                           |

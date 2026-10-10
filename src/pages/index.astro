@@ -50,6 +50,7 @@ const { email } = Astro.locals;
           ))
         }
       </ul>
+      <p class="request"><a href="/request">アプリへの要望・不具合を送る</a></p>
     </main>
   </body>
 </html>
@@ -112,6 +113,16 @@ const { email } = Astro.locals;
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .request {
+    margin: 1.5rem 0 0;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .request a {
+    color: var(--accent);
   }
 
   .card {

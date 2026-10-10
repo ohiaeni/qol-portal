@@ -9,4 +9,6 @@ export type Bindings = Env & {
    * ACCESS_TEAM_DOMAIN・ACCESS_AUD があるときは無視する（本番で JWT の検証を飛ばせないようにする）
    */
   DEV_USER_EMAIL?: string;
+  /** 要望の issue を作るための fine-grained PAT（対象リポジトリの Issues の書き込みだけ許可する）。未設定なら要望は送れない */
+  GITHUB_TOKEN?: string;
 };
