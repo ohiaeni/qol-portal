@@ -4,3 +4,5 @@ DEV_USER_EMAIL=owner@example.invalid
 # 任意: ローカル開発で画面に出す各アプリの URL（wrangler.jsonc の値を上書きする）
 # KAITOKUNE_URL=http://localhost:5173
 # KAKEIBOU_URL=http://localhost:5174
+# 任意: 要望フォームで issue を作るための PAT（対象リポジトリの Issues の書き込みだけ許可する）。ないと要望は送れない
+# GITHUB_TOKEN=github_pat_xxx

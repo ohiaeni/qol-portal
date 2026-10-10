@@ -14,6 +14,9 @@
     // ポータルから開く各アプリの URL（秘密情報ではない）。空のままだと画面に「URL が未設定」と出る。
     // ローカル開発では .dev.vars で上書きできる
     "KAITOKUNE_URL": "https://kaitokune.ohiaeni.workers.dev",
-    "KAKEIBOU_URL": "https://kakeibou-oftg.onrender.com"
+    "KAKEIBOU_URL": "https://kakeibou-oftg.onrender.com",
+    // 要望から issue を作る GitHub リポジトリ（`owner/name`）
+    "KAITOKUNE_REPO": "ohiaeni/kaitokune",
+    "KAKEIBOU_REPO": "ohiaeni/kakeibou"
   }
 }
