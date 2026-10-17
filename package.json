@@ -37,7 +37,7 @@
     "cspell": "^10.3.6",
     "knip": "^6.40.0",
     "lefthook": "^2.2.0",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "typescript": "^6.0.3",
     "vite": "^8.3.3",
     "vitest": "^4.1.0",
@@ -52,8 +52,8 @@
     "lefthook": false
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.3",
-    "astro": "^7.3.5"
+    "@astrojs/cloudflare": "^14.3.4",
+    "astro": "^7.3.8"
   },
   "homepage": "https://github.com/ohiaeni/qol-portal#readme"
 }
